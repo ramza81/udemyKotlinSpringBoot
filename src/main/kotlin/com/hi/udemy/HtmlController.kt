@@ -5,6 +5,7 @@ import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.*
 import java.security.MessageDigest
+import javax.servlet.http.HttpSession
 
 @Controller
 class HtmlController {
@@ -52,8 +53,43 @@ class HtmlController {
             e.printStackTrace()
         }
 
-        model.addAttribute("title", "Home")
+        model.addAttribute("title", "sign success")
         return "index"
+
+    }
+
+    @PostMapping("/login")
+    fun postLogin(model: Model,
+                  session: HttpSession,
+                  @RequestParam(value = "id") userId: String,
+                  @RequestParam(value = "password") password: String): String {
+        var pageName = ""
+
+        try {
+            val cryptoPassword = crypto(password)
+            val dbUser = repository.findByUserId(userId)
+
+            if (dbUser != null) {
+                val dbPassword = dbUser.password
+
+                if (cryptoPassword == dbPassword) {
+                    session.setAttribute("userId", dbUser.userId)
+
+                    model.addAttribute("title", "login success")
+                    model.addAttribute("userId", userId)
+
+                    pageName = "welcome"
+                }
+            } else  {
+                model.addAttribute("title", "Failed login")
+                pageName = "login"
+            }
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        return pageName
 
     }
 
